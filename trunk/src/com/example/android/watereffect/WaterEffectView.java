@@ -11,6 +11,10 @@ import android.view.SurfaceView;
 
 public class WaterEffectView extends SurfaceView implements SurfaceHolder.Callback
 {
+	// This is quite a piece. I was challenged by a FPS around 7, which I though was not okey.
+	// So I came up with an idea, if I scale the bitmap by 50% and calculate the ripples and then 
+	// render the bitmap in full size it will at least be around 15 FPS. But it came up to 25 FPS
+	// and I was a happy camper.
 	private final int SCALE = 2;
 	
 	private WaterEffectThread _thread = null;
@@ -63,7 +67,6 @@ public class WaterEffectView extends SurfaceView implements SurfaceHolder.Callba
 		
 		_bufferOne = new int[_imageDataLength];
 		_bufferTwo = new int[_imageDataLength];
-		_imageWidth = _orginalImage.getWidth() - 2;
 		
 		for(int i = 0; i < _imageDataLength; i++)
 		{
@@ -72,9 +75,11 @@ public class WaterEffectView extends SurfaceView implements SurfaceHolder.Callba
 		}
 	}
 	
+	//This method is the heart of the ripple effect.
 	@Override
 	protected void onDraw(Canvas canvas)
-	{	
+	{ 
+		// Switch the buffers, e.g. ripple frames.
 		_bufferTmp = _bufferOne;
         _bufferOne = _bufferTwo;
         _bufferTwo = _bufferTmp;
@@ -86,12 +91,14 @@ public class WaterEffectView extends SurfaceView implements SurfaceHolder.Callba
                 continue;
             }
 
+            // Calculates the data for current pixel by the surrounding pixels. 
             _bufferOne[i] = 
             	(((_bufferTwo[i - 1] + 
             	   _bufferTwo[i + 1] + 
             	   _bufferTwo[i - _imageWidth] +
             	   _bufferTwo[i + _imageWidth]) >> 1)) - _bufferOne[i];
             
+            // Creates ripple damping, without this the ripple will never ends
             _bufferOne[i] -= (_bufferOne[i] >> _damping);
 
             _offset = i + (_bufferOne[i - 1] - _bufferOne[i + 1]) + 
@@ -109,7 +116,8 @@ public class WaterEffectView extends SurfaceView implements SurfaceHolder.Callba
             }
         }
 
-		// By some reason, which I can not understand, createBitmap and createScaledBitmap 
+		// Scale image to full screen.
+		// Coders Note: By some reason, which I can not understand, createBitmap and createScaledBitmap 
 		// reports GC_EXTERNAL_ALLOC. So I think there are some memory leaks inside those methods.
 		_rippleImage = Bitmap.createBitmap(_rippleImageData, _imageWidth, _imageHeight, Config.RGB_565);
 		_rippleImage = Bitmap.createScaledBitmap(_rippleImage, _screenImageWidth, _screenImageHeight, true);
