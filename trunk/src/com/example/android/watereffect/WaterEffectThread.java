@@ -22,7 +22,8 @@ public class WaterEffectThread extends Thread
 	
 	@Override
 	public void run()
-	{
+	{ 
+		// Draws the the screen.
 		Canvas canvas = null;
 		
 		while(this._run)
